@@ -1,5 +1,14 @@
+From dcfae097b96ff424ba1833a5ddecea697261fbe9 Mon Sep 17 00:00:00 2001
+From: Brian Dentino <brian.dentino@gmail.com>
+Date: Mon, 9 Mar 2015 22:32:51 -0700
+Subject: [PATCH] Patch commit for REDIS_URL
+
+---
+ lib/gitlab_config.rb | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
 diff --git a/lib/gitlab_config.rb b/lib/gitlab_config.rb
-index ad15247..54056b7 100644
+index 300d6ba..208701d 100644
 --- a/lib/gitlab_config.rb
 +++ b/lib/gitlab_config.rb
 @@ -1,10 +1,11 @@
@@ -14,4 +23,7 @@ index ad15247..54056b7 100644
 +    @config = YAML.load(ERB.new(File.read(File.join(ROOT_PATH, 'config.yml'))).result)
    end
  
-   def repos_path
+   def home
+-- 
+2.3.0
+
