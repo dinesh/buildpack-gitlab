@@ -7,6 +7,14 @@
 # fail fast
 set -e
 
+# install rvm
+curl -sSL https://get.rvm.io | bash -s stable
+echo 'source /usr/local/rvm/scripts/rvm' >> /etc/bash.bashrc
+
+# install ruby and gems
+/bin/bash -l -c "rvm install --default 2.1.5"
+/bin/bash -l -c "gem install bundler"
+
 # Debug mode
 [[ $DEBUG ]] && set -x
 
