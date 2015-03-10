@@ -243,8 +243,4 @@ fi
 # create the /var/run/sshd directory (required for sshd to start)
 sudo mkdir -p /var/run/sshd
 
-status "Starting Sidekiq"
-cd /app
-bundle exec rake sidekiq:start RAILS_ENV=production
-
 status "Finished building GitLab"
