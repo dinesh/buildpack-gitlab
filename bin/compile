@@ -186,9 +186,9 @@ sudo -u git -H git config --global user.email "gitlab@lapwinglabs.com"
 sudo -u git -H git config --global core.autocrlf "input"
 
 # run processes as root
-# status "Patching config/gitlab.yml to run processes as root"
-# sed 's,# user: git,user: root,' -i config/gitlab.yml
-# grep -q "ssh_user: git" config/gitlab.yml || sed '/ssh_port:/i\    ssh_user: git' -i config/gitlab.yml
+status "Patching config/gitlab.yml to run processes as root"
+sed 's,# user: git,user: root,' -i config/gitlab.yml
+grep -q "ssh_user: git" config/gitlab.yml || sed '/ssh_port:/i\    ssh_user: git' -i config/gitlab.yml
 
 # create required tmp and log directories
 mkdir -p tmp/pids/ tmp/sockets/ public/uploads
