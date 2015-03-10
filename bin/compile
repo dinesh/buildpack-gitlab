@@ -244,7 +244,7 @@ fi
 sudo mkdir -p /var/run/sshd
 
 status "Starting Sidekiq"
-cd $ROOT_DIR
+cd /app
 bundle exec rake sidekiq:start RAILS_ENV=production
 
 status "Finished building GitLab"
