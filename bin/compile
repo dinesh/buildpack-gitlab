@@ -160,6 +160,14 @@ else
   sudo -u root -H sed '/{{OAUTH_GITHUB_SCOPE}}/d' -i config/gitlab.yml
 fi
 
+test -f config/database.yml || cp config/database.yml.mysql config/database.yml
+
+sudo -u root -H sed 's/{{DB_HOST}}/'"${DB_HOST}"'/' -i config/database.yml
+sudo -u root -H sed 's/{{DB_NAME}}/'"${DB_NAME}"'/' -i config/database.yml
+sudo -u root -H sed 's/{{DB_PASSWORD}}/'"${DB_PASSWORD}"'/' -i config/database.yml
+sudo -u root -H sed 's/{{DB_PORT}}/'"${DB_PORT}"'/' -i config/database.yml
+sudo -u root -H sed 's/{{DB_USER}}/'"${DB_USER}"'/' -i config/database.yml
+
 test -f config/unicorn.rb || cp config/unicorn.rb.example config/unicorn.rb
 sed 's,/home/git/gitlab,/app,' -i config/unicorn.rb
 test -f config/initializers/rack_attack.rb || cp config/initializers/rack_attack.rb.example config/initializers/rack_attack.rb
