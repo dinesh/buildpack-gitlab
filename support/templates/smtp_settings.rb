@@ -1,25 +1,19 @@
-require 'cgi'
-require 'uri'
+# To enable smtp email delivery for your GitLab instance do next:
+# 1. Rename this file to smtp_settings.rb
+# 2. Edit settings inside this file
+# 3. Restart GitLab instance
+#
+if Rails.env.production?
+  Gitlab::Application.config.action_mailer.delivery_method = :smtp
 
-if Rails.env.production? && ENV['SMTP_URL']
-	Gitlab::Application.config.action_mailer.delivery_method = :smtp
-
-	begin
-		uri = URI.parse(ENV['SMTP_URL'])
-		params = uri.query ? CGI::parse(uri.query) : {}
-		domain = params['domain'] ? params['domain'][0] : nil
-		guessed_domain = uri.host.include?('.') ? uri.host.split('.')[-2..-1].join('.') : uri.host
-	rescue URI::InvalidURIError
-		raise "Invalid SMTP_URL: #{ENV['SMTP_URL']}"
-	end
-
-	ActionMailer::Base.smtp_settings = {
-		address: uri.host,
-		port: uri.port || 465,
-		user_name: uri.user,
-		password: uri.password,
-		domain: domain || guessed_domain,
-		authentication: :login,
-		tls: true
-	}
+  ActionMailer::Base.smtp_settings = {
+    address: "{{SMTP_HOST}}",
+    port: {{SMTP_PORT}},
+    user_name: "{{SMTP_USER}}",
+    password: "{{SMTP_PASS}}",
+    domain: "{{SMTP_DOMAIN}}",
+    authentication: "{{SMTP_AUTHENTICATION}}",
+    openssl_verify_mode: "{{SMTP_OPENSSL_VERIFY_MODE}}",
+    enable_starttls_auto: {{SMTP_STARTTLS}}
+  }
 end

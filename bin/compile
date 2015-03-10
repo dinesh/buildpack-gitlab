@@ -96,9 +96,64 @@ if git apply --check $ROOT_DIR/support/patches/resque_url_production.rb.patch &>
 	git apply --ignore-space-change --ignore-whitespace $ROOT_DIR/support/patches/resque_url_production.rb.patch
 fi
 
+# Setup Configuration Variables
+GITLAB_HOST=${GITLAB_HOST:-localhost}
+GITLAB_PORT=${GITLAB_PORT:-}
+GITLAB_HTTPS=${GITLAB_HTTPS:-false}
+
+GITLAB_TIMEZONE=${GITLAB_TIMEZONE:-UTC}
+
+GITLAB_EMAIL=${GITLAB_EMAIL:-example@example.com}
+
+GITLAB_SSH_HOST=${GITLAB_SSH_HOST:-$GITLAB_HOST}
+GITLAB_SSH_PORT=${GITLAB_SSH_PORT:-$GITLAB_SHELL_SSH_PORT} # for backwards compatibility
+GITLAB_SSH_PORT=${GITLAB_SSH_PORT:-22}
+
+OAUTH_ENABLED=${OAUTH_ENABLED:-false}
+OAUTH_GITHUB_API_KEY=${OAUTH_GITHUB_API_KEY:-}
+OAUTH_GITHUB_APP_SECRET=${OAUTH_GITHUB_APP_SECRET:-}
+
+SMTP_DOMAIN=${SMTP_DOMAIN:-www.gmail.com}
+SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+SMTP_PORT=${SMTP_PORT:-587}
+SMTP_USER=${SMTP_USER:-}
+SMTP_PASS=${SMTP_PASS:-}
+SMTP_OPENSSL_VERIFY_MODE=${SMTP_OPENSSL_VERIFY_MODE:-}
+SMTP_STARTTLS=${SMTP_STARTTLS:-true}
+if [ -n "${SMTP_USER}" ]; then
+  SMTP_ENABLED=${SMTP_ENABLED:-true}
+  SMTP_AUTHENTICATION=${SMTP_AUTHENTICATION:-login}
+fi
+SMTP_ENABLED=${SMTP_ENABLED:-false}
+GITLAB_EMAIL_ENABLED=${GITLAB_EMAIL_ENABLED:-$SMTP_ENABLED}
+
+
 # copy default configurations
-test -f config/gitlab.yml || cp config/gitlab.yml.example config/gitlab.yml
+test -f config/gitlab.yml || cp $ROOT_DIR/support/templates/gitlab.yml config/gitlab.yml
 test -f config/resque.yml || cp config/resque.yml.example config/resque.yml
+
+sudo -u git -H sed 's/{{GITLAB_HOST}}/'"${GITLAB_HOST}"'/' -i config/gitlab.yml
+sudo -u git -H sed 's/{{GITLAB_PORT}}/'"${GITLAB_PORT}"'/' -i config/gitlab.yml
+sudo -u git -H sed 's/{{GITLAB_HTTPS}}/'"${GITLAB_HTTPS}"'/' -i config/gitlab.yml
+sudo -u git -H sed 's/{{GITLAB_EMAIL}}/'"${GITLAB_EMAIL}"'/' -i config/gitlab.yml
+
+sudo -u git -H sed 's/{{GITLAB_SSH_HOST}}/'"${GITLAB_SSH_HOST}"'/' -i config/gitlab.yml
+sudo -u git -H sed 's/{{GITLAB_SSH_PORT}}/'"${GITLAB_SSH_PORT}"'/' -i config/gitlab.yml
+
+sudo -u git -H sed 's/{{GITLAB_TIMEZONE}}/'"${GITLAB_TIMEZONE}"'/' -i config/gitlab.yml
+
+sudo -u git -H sed 's/{{OAUTH_ENABLED}}/'"${OAUTH_ENABLED}"'/' -i config/gitlab.yml
+# github
+if [ -n "${OAUTH_GITHUB_API_KEY}" -a -n "${OAUTH_GITHUB_APP_SECRET}" ]; then
+  OAUTH_ENABLED=true
+  sudo -u git -H sed 's/{{OAUTH_GITHUB_API_KEY}}/'"${OAUTH_GITHUB_API_KEY}"'/' -i config/gitlab.yml
+  sudo -u git -H sed 's/{{OAUTH_GITHUB_APP_SECRET}}/'"${OAUTH_GITHUB_APP_SECRET}"'/' -i config/gitlab.yml
+  sudo -u git -H sed 's/{{OAUTH_GITHUB_SCOPE}}/user:email/' -i config/gitlab.yml
+else
+  sudo -u git -H sed '/{{OAUTH_GITHUB_API_KEY}}/d' -i config/gitlab.yml
+  sudo -u git -H sed '/{{OAUTH_GITHUB_APP_SECRET}}/d' -i config/gitlab.yml
+  sudo -u git -H sed '/{{OAUTH_GITHUB_SCOPE}}/d' -i config/gitlab.yml
+fi
 
 test -f config/unicorn.rb || cp config/unicorn.rb.example config/unicorn.rb
 sed 's,/home/git/gitlab,/app,' -i config/unicorn.rb
@@ -130,6 +185,37 @@ sudo sed 's,/home/git/gitlab/,/app/,' -i /etc/logrotate.d/gitlab
 if [ ! -f config/initializers/smtp_settings.rb ]; then
 	status "Writing config/initializers/smtp_settings.rb to read from SMTP_URL"
 	cp $ROOT_DIR/support/templates/smtp_settings.rb config/initializers/smtp_settings.rb
+fi
+
+# configure mail delivery
+sudo -u git -H sed 's/{{GITLAB_EMAIL_ENABLED}}/'"${GITLAB_EMAIL_ENABLED}"'/' -i config/gitlab.yml
+if [ "${SMTP_ENABLED}" == "true" ]; then
+  sudo -u git -H sed 's/{{SMTP_HOST}}/'"${SMTP_HOST}"'/' -i config/initializers/smtp_settings.rb
+  sudo -u git -H sed 's/{{SMTP_PORT}}/'"${SMTP_PORT}"'/' -i config/initializers/smtp_settings.rb
+
+  case "${SMTP_USER}" in
+    "") sudo -u git -H sed '/{{SMTP_USER}}/d' -i config/initializers/smtp_settings.rb ;;
+    *) sudo -u git -H sed 's/{{SMTP_USER}}/'"${SMTP_USER}"'/' -i config/initializers/smtp_settings.rb ;;
+  esac
+
+  case "${SMTP_PASS}" in
+    "") sudo -u git -H sed '/{{SMTP_PASS}}/d' -i config/initializers/smtp_settings.rb ;;
+    *) sudo -u git -H sed 's/{{SMTP_PASS}}/'"${SMTP_PASS}"'/' -i config/initializers/smtp_settings.rb ;;
+  esac
+
+  sudo -u git -H sed 's/{{SMTP_DOMAIN}}/'"${SMTP_DOMAIN}"'/' -i config/initializers/smtp_settings.rb
+  sudo -u git -H sed 's/{{SMTP_STARTTLS}}/'"${SMTP_STARTTLS}"'/' -i config/initializers/smtp_settings.rb
+
+  if [ -n "${SMTP_OPENSSL_VERIFY_MODE}" ]; then
+    sudo -u git -H sed 's/{{SMTP_OPENSSL_VERIFY_MODE}}/'"${SMTP_OPENSSL_VERIFY_MODE}"'/' -i config/initializers/smtp_settings.rb
+  else
+    sudo -u git -H sed '/{{SMTP_OPENSSL_VERIFY_MODE}}/d' -i config/initializers/smtp_settings.rb
+  fi
+
+  case "${SMTP_AUTHENTICATION}" in
+    "") sudo -u git -H sed '/{{SMTP_AUTHENTICATION}}/d' -i config/initializers/smtp_settings.rb ;;
+    *) sudo -u git -H sed 's/{{SMTP_AUTHENTICATION}}/'"${SMTP_AUTHENTICATION}"'/' -i config/initializers/smtp_settings.rb ;;
+  esac
 fi
 
 # create the /var/run/sshd directory (required for sshd to start)
