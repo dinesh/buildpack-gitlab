@@ -86,6 +86,8 @@ sudo chmod u+rwx,g=rx,o-rwx /home/git/gitlab-satellites
 
 # 5. Database
 
+
+
 # 6. GitLab
 
 grep -q "sshd" Procfile || echo "sshd: /usr/sbin/sshd -D" >> Procfile
@@ -223,7 +225,5 @@ fi
 
 # create the /var/run/sshd directory (required for sshd to start)
 sudo mkdir -p /var/run/sshd
-
-sudo -u git -H RAILS_ENV=production bin/background_jobs start
 
 status "Finished building GitLab"
