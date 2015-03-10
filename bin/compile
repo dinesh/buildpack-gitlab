@@ -81,6 +81,9 @@ wget -qO- https://github.com/gitlabhq/gitlab-shell/archive/${GITLAB_SHELL_VERSIO
 sudo chown -R git:root /home/git/repositories/
 sudo chown -R git:root /home/git/.ssh/
 
+sudo chmod -R ug+rwX,o-rwx /home/git/repositories/
+sudo chmod u+rwx,g=rx,o-rwx /home/git/gitlab-satellites
+
 # 5. Database
 
 # 6. GitLab
@@ -160,8 +163,8 @@ sed 's,/home/git/gitlab,/app,' -i config/unicorn.rb
 test -f config/initializers/rack_attack.rb || cp config/initializers/rack_attack.rb.example config/initializers/rack_attack.rb
 
 sudo -u git -H git config --global user.name "GitLab"
-sudo -u git -H git config --global user.email "gitlab@localhost"
-sudo -u git -H git config --global core.autocrlf input
+sudo -u git -H git config --global user.email "gitlab@lapwinglabs.com"
+sudo -u git -H git config --global core.autocrlf "input"
 
 # run processes as root
 # status "Patching config/gitlab.yml to run processes as root"
@@ -220,5 +223,7 @@ fi
 
 # create the /var/run/sshd directory (required for sshd to start)
 sudo mkdir -p /var/run/sshd
+
+sudo -u git -H RAILS_ENV=production bin/background_jobs start
 
 status "Finished building GitLab"
