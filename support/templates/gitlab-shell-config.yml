@@ -9,7 +9,7 @@ begin
   end
   redis_url = URI.parse(ENV['REDIS_URL'])
 rescue URI::InvalidURIError
-  raise "Invalid REDIS_URL: #{ENV['REDIS_URL']}"
+  raise 'Invalid REDIS_URL'
 end
 
 %>
@@ -21,10 +21,10 @@ user: git
 gitlab_url: "http://localhost:5000/"
 
 http_settings:
-#  user: someone
-#  password: somepass
-#  ca_file: /etc/ssl/cert.pem
-#  ca_path: /etc/pki/tls/certs
+  #  user: someone
+  #  password: somepass
+  #  ca_file: /etc/ssl/cert.pem
+  #  ca_path: /etc/pki/tls/certs
   self_signed_cert: false
 
 # Repositories path
