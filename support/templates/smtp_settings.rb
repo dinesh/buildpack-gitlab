@@ -3,7 +3,10 @@
 # 2. Edit settings inside this file
 # 3. Restart GitLab instance
 #
-if Rails.env.production?
+if Rails.env.production?\
+	Gitlab::Application.config.action_mailer.perform_deliveries = true
+
+	Gitlab::Application.config.action_mailer.raise_delivery_errors = true
   Gitlab::Application.config.action_mailer.delivery_method = :smtp
 
   ActionMailer::Base.smtp_settings = {
@@ -11,9 +14,7 @@ if Rails.env.production?
     port: {{SMTP_PORT}},
     user_name: "{{SMTP_USER}}",
     password: "{{SMTP_PASS}}",
-    domain: "{{SMTP_DOMAIN}}",
-    authentication: :login,
-    openssl_verify_mode: "{{SMTP_OPENSSL_VERIFY_MODE}}",
+    authentication: :plain,
     enable_starttls_auto: {{SMTP_STARTTLS}}
   }
 end
