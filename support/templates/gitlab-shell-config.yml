@@ -18,14 +18,14 @@ end
 user: git
 
 # Url to gitlab instance. Used for api calls. Should end with a slash.
-gitlab_url: "http://localhost:5000/"
+gitlab_url: "https://gitlab.lapwinglabs.com:5000/"
 
 http_settings:
 #  user: someone
 #  password: somepass
 #  ca_file: /etc/ssl/cert.pem
 #  ca_path: /etc/pki/tls/certs
-  self_signed_cert: false
+  self_signed_cert: true
 
 # Repositories path
 # Give the canonicalized absolute pathname,
@@ -54,4 +54,4 @@ log_level: INFO
 # Audit usernames.
 # Set to true to see real usernames in the logs instead of key ids, which is easier to follow, but
 # incurs an extra API call on every gitlab-shell command.
-audit_usernames: false
+audit_usernames: true
