@@ -7,25 +7,6 @@
 # fail fast
 set -e
 
-# status "Uninstalling Ruby 1.9"
-# sudo apt-get -y remove ruby1.9
-
-status "Setting Up RVM"
-# install rvm
-gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-curl -sSL https://get.rvm.io | bash -s stable
-echo 'source /usr/local/rvm/scripts/rvm' >> /etc/bash.bashrc
-
-source /usr/local/rvm/scripts/rvm
-status "Installing Ruby 2.1.5"
-# install ruby and gems
-/bin/bash -l -c "rvm install --default 2.1.5"
-/bin/bash -l -c "gem install bundler"
-
-echo "Linking /usr/bin/ruby to Ruby 2.1.5"
-echo `which ruby`
-ln -s `which ruby` /usr/bin/ruby
-
 # Debug mode
 [[ $DEBUG ]] && set -x
 
@@ -50,7 +31,28 @@ cd $BUILD_DIR
 
 # 1. Packages / Dependencies
 status "Installing required packages"
+
 export DEBIAN_FRONTEND=noninteractive
+
+# status "Uninstalling Ruby 1.9"
+# sudo apt-get -y remove ruby1.9
+
+status "Setting Up RVM"
+# install rvm
+gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+curl -sSL https://get.rvm.io | bash -s stable
+echo 'source /usr/local/rvm/scripts/rvm' >> /etc/bash.bashrc
+
+source /usr/local/rvm/scripts/rvm
+status "Installing Ruby 2.1.5"
+# install ruby and gems
+/bin/bash -l -c "rvm install --default 2.1.5"
+/bin/bash -l -c "gem install bundler"
+
+echo "Linking /usr/bin/ruby to Ruby 2.1.5"
+echo `which ruby`
+#ln -s `which ruby` /usr/bin/ruby
+
 sudo -E apt-get update -qq > /dev/null
 sudo -E apt-get install -y python-software-properties software-properties-common > /dev/null
 sudo FORCE_ADD_APT_REPOSITORY=yes add-apt-repository ppa:git-core/ppa &> /dev/null
