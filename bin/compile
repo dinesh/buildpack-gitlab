@@ -114,7 +114,7 @@ sudo chmod u+rwx,g=rx,o-rwx /home/git/gitlab-satellites
 
 # 6. GitLab
 
-grep -q "sshd" Procfile || echo "sshd: /usr/sbin/sshd -D" >> Procfile
+grep -q "sshd" Procfile.real || echo "sshd: /usr/sbin/sshd -D" >> Procfile.real
 
 # Setup Configuration Variables
 GITLAB_HOST=${GITLAB_HOST:-localhost}
