@@ -7,14 +7,22 @@
 # fail fast
 set -e
 
+status "Uninstalling Ruby 1.9"
+sudo apt-get -y remove ruby1.9
+
+status "Setting Up RVM"
 # install rvm
 gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
 curl -sSL https://get.rvm.io | bash -s stable
 echo 'source /usr/local/rvm/scripts/rvm' >> /etc/bash.bashrc
 
+status "Installing Ruby 2.1.5"
 # install ruby and gems
 /bin/bash -l -c "rvm install --default 2.1.5"
 /bin/bash -l -c "gem install bundler"
+
+status "Linking /usr/bin/ruby to Ruby 2.1.5 (`which ruby`)"
+ln -s `which ruby` /usr/bin/ruby
 
 # Debug mode
 [[ $DEBUG ]] && set -x
@@ -85,6 +93,9 @@ wget -qO- https://github.com/gitlabhq/gitlab-shell/archive/${GITLAB_SHELL_VERSIO
 	status "Installing gitlab-shell"
 	sudo -E -u git -H ./bin/install
 	sudo -u git -H mkdir /home/git/gitlab-satellites
+
+	status "Adding REDIS_URL file to gitlab-shell"
+	echo $REDIS_URL > /home/git/.ssh/REDIS_URL
 )
 
 sudo chown -R git:root /home/git/repositories/
@@ -100,15 +111,6 @@ sudo chmod u+rwx,g=rx,o-rwx /home/git/gitlab-satellites
 # 6. GitLab
 
 grep -q "sshd" Procfile || echo "sshd: /usr/sbin/sshd -D" >> Procfile
-
-if git apply --check $ROOT_DIR/support/patches/resque_url_4_sidekiq.rb.patch &> /dev/null; then
-	status "Patching config/initializers/4_sidekiq.rb to read from REDIS_URL"
-	git apply --ignore-space-change --ignore-whitespace $ROOT_DIR/support/patches/resque_url_4_sidekiq.rb.patch
-fi
-if git apply --check $ROOT_DIR/support/patches/resque_url_production.rb.patch &> /dev/null; then
-	status "Patching config/environments/production.rb to read from REDIS_URL"
-	git apply --ignore-space-change --ignore-whitespace $ROOT_DIR/support/patches/resque_url_production.rb.patch
-fi
 
 # Setup Configuration Variables
 GITLAB_HOST=${GITLAB_HOST:-localhost}
