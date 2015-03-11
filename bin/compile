@@ -104,6 +104,7 @@ wget -qO- https://github.com/gitlabhq/gitlab-shell/archive/${GITLAB_SHELL_VERSIO
 
 sudo chown -R git:root /home/git/repositories/
 sudo chown -R git:root /home/git/.ssh/
+sudo chown -R git:root /home/git/gitlab-shell/
 
 sudo chmod -R ug+rwX,o-rwx /home/git/repositories/
 sudo chmod u+rwx,g=rx,o-rwx /home/git/gitlab-satellites
