@@ -20,9 +20,7 @@ status "Installing Ruby 2.1.5"
 # install ruby and gems
 /bin/bash -l -c "rvm install --default 2.1.5"
 /bin/bash -l -c "gem install bundler"
-
-status "Linking /usr/bin/ruby to Ruby 2.1.5 (`which ruby`)"
-ln -s `which ruby` /usr/bin/ruby
+/bin/bash -l -c "ln -s `which ruby` /usr/bin/ruby"
 
 # Debug mode
 [[ $DEBUG ]] && set -x
