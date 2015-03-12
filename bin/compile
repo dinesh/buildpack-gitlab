@@ -38,12 +38,14 @@ status "Uninstalling Ruby 1.9"
 sudo apt-get -y remove ruby1.9
 
 status "Setting Up RVM"
+
 # install rvm
 gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
 curl -sSL https://get.rvm.io | bash -s stable
 echo 'source /usr/local/rvm/scripts/rvm' >> /etc/bash.bashrc
 
 status "Installing Ruby 2.1.5"
+
 # install ruby and gems
 /bin/bash -l -c "rvm install --default 2.1.5"
 /bin/bash -l -c "gem install bundler"
@@ -60,16 +62,13 @@ sudo -E apt-get update -qq > /dev/null
 sudo -E apt-get install -qq -y --force-yes -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" unzip checkinstall libyaml-dev libgdbm-dev libreadline-dev libncurses5-dev libffi-dev libicu-dev redis-server python-docutils git cmake &> /dev/null
 sudo -E apt-get clean
 
-# 2. Ruby
-# via heroku-buildpack-ruby
-
 # 3. System Users
 status "Configuring git user"
 sudo adduser --disabled-login --gecos 'GitLab' git
 sudo adduser git root
 
 # 4. GitLab shell
-GITLAB_SHELL_DEFAULT_VERSION="v1.9.8"
+GITLAB_SHELL_DEFAULT_VERSION="v2.3.0"
 if [ -f GITLAB_SHELL_VERSION -a -s GITLAB_SHELL_VERSION ]; then
 	# try to read from file GITLAB_SHELL_VERSION
 	GITLAB_SHELL_DEFAULT_VERSION="v$(<GITLAB_SHELL_VERSION)"
@@ -81,12 +80,20 @@ wget -qO- https://github.com/gitlabhq/gitlab-shell/archive/${GITLAB_SHELL_VERSIO
 
 (
 	cd /home/git/gitlab-shell
+	GITLAB_URL=${GITLAB_URL:-"http://localhost"}
+	GITLAB_SELF_SIGNED_CERT=${GITLAB_SELF_SIGNED_CERT:-false}
+
 	if sudo -u git -H git apply --check $ROOT_DIR/support/patches/gitlab-shell-config.rb.patch &> /dev/null; then
 		status "Patching gitlab-shell/lib/gitlab_config.rb to allow using ERB in config.yml"
 		sudo -u git -H git apply --ignore-space-change --ignore-whitespace $ROOT_DIR/support/patches/gitlab-shell-config.rb.patch
 	fi
+
 	status "Writing gitlab-shell/config.yml to read from REDIS_URL"
 	sudo -u git -H cp $ROOT_DIR/support/templates/gitlab-shell-config.yml config.yml
+	sudo -u root -H sed 's/{{GITLAB_URL}}/'"${GITLAB_URL}"'/' -i config/gitlab.yml
+	sudo -u root -H sed 's/{{GITLAB_SELF_SIGNED_CERT}}/'"${GITLAB_SELF_SIGNED_CERT}"'/' -i config/gitlab.yml
+
+
 	# dirty way to make sure the environment variables from gitlab will be available in gitlab-shell cli via ssh
 	sudo cp $ROOT_DIR/support/templates/gitlab2gitlabshell-env.sh /usr/local/bin/gitlab2gitlabshell-env.sh
 	sudo chmod +x /usr/local/bin/gitlab2gitlabshell-env.sh
@@ -109,9 +116,6 @@ sudo chown -R git:root /home/git/gitlab-shell/
 
 sudo chmod -R ug+rwX,o-rwx /home/git/repositories/
 sudo chmod u+rwx,g=rx,o-rwx /home/git/gitlab-satellites
-
-# 5. Database
-
 
 
 # 6. GitLab
@@ -165,6 +169,7 @@ sudo -u root -H sed 's/{{GITLAB_SSH_PORT}}/'"${GITLAB_SSH_PORT}"'/' -i config/gi
 sudo -u root -H sed 's/{{GITLAB_TIMEZONE}}/'"${GITLAB_TIMEZONE}"'/' -i config/gitlab.yml
 
 sudo -u root -H sed 's/{{OAUTH_ENABLED}}/'"${OAUTH_ENABLED}"'/' -i config/gitlab.yml
+
 # github
 if [ -n "${OAUTH_GITHUB_API_KEY}" -a -n "${OAUTH_GITHUB_APP_SECRET}" ]; then
   OAUTH_ENABLED=true
@@ -177,7 +182,9 @@ else
   sudo -u root -H sed '/{{OAUTH_GITHUB_SCOPE}}/d' -i config/gitlab.yml
 fi
 
-test -f config/database.yml || cp config/database.yml.mysql config/database.yml
+# 5. Database
+
+cp -f $ROOT_DIR/support/templates/database.yml.mysql config/database.yml.mysql
 
 sudo -u root -H sed 's/{{DB_HOST}}/'"${DB_HOST}"'/' -i config/database.yml
 sudo -u root -H sed 's/{{DB_NAME}}/'"${DB_NAME}"'/' -i config/database.yml
@@ -190,7 +197,7 @@ sed 's,/home/git/gitlab,/app,' -i config/unicorn.rb
 test -f config/initializers/rack_attack.rb || cp config/initializers/rack_attack.rb.example config/initializers/rack_attack.rb
 
 sudo -u git -H git config --global user.name "GitLab"
-sudo -u git -H git config --global user.email "gitlab@lapwinglabs.com"
+sudo -u git -H git config --global user.email "${GITLAB_EMAIL}"
 sudo -u git -H git config --global core.autocrlf "input"
 
 # run processes as root
@@ -208,9 +215,6 @@ mkdir -p tmp/pids/ tmp/sockets/ public/uploads
 # install logrotate configuration
 sudo cp lib/support/logrotate/gitlab /etc/logrotate.d/gitlab
 sudo sed 's,/home/git/gitlab/,/app/,' -i /etc/logrotate.d/gitlab
-
-# 7. Nginx
-# not required
 
 if [ ! -f config/initializers/smtp_settings.rb ]; then
 	status "Writing config/initializers/smtp_settings.rb to read from SMTP_*"
