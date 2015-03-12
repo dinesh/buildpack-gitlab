@@ -10,6 +10,8 @@ set -e
 # Debug mode
 [[ $DEBUG ]] && set -x
 
+apt-get install sudo
+
 # parse and derive params
 BUILD_DIR=$1
 CACHE_DIR=$2
